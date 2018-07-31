@@ -32,13 +32,23 @@
 		console.log("[MongoDB Stitch] Connected to Stitch")
 	}).catch(err => {
 		console.error(err)
-	});	
-
+	});
+	
+	function borrar() {
+		// borrado
+		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user => 
+			db.collection('TestCollection01').deleteMany({campo01: 'valor01'})
+		).catch(err => {
+			console.error(err)
+		});
+	}
+	
 </script>	
 </head>
 <body>
 	
-	<h1>Hola Mundo !!!</h1>
+	<h1>Borrar</h1>
+	<input type="button" value="borrar" onclick="borrar()" />
 	
 	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
