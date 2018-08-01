@@ -22,38 +22,105 @@
 	// cliente base de datos
 	const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('TestDatabase01');
 	
-	// inserción y busqueda
-	client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user => 
-		db.collection('TestCollection01').insertOne({campo01: 'valor01', campo02: 'valor02', campo03: 'valor03'})
-	).then(() => 
-		db.collection('TestCollection01').find({}).asArray()
-	).then(docs => {
-		console.log("Found docs", docs)
-		console.log("[MongoDB Stitch] Connected to Stitch")
-	}).catch(err => {
-		console.error(err)
-	});
+	// insertar
+	function insertar() {
+		console.log('insertar');
+		if($('#tareaTexto').val()) {
+			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user => 
+				db.collection('TestCollection01').insertOne({'tareaTexto': $('#tareaTexto').val()})
+			).catch(err => {
+				console.error(err)
+			});			
+		}
+	}	
 	
+	// borrar
 	function borrar() {
-		// borrado
+		console.log('borrar');
+		if($('#tareaId').val()) {
+			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user => 
+				db.collection('TestCollection01').deleteMany({'_id':{'$oid':$('#tareaId').val()}})
+			).catch(err => {
+				console.error(err)
+			});
+		}
+	}
+	
+	// actualizar
+	function actualizar() {
+		console.log('actualizar');
 		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user => 
-			db.collection('TestCollection01').deleteMany({campo01: 'valor01'})
-		).catch(err => {
+			db.collection('TestCollection01').find({}).asArray()
+		).then(docs => {
+			docs.forEach(function (arrayItem) {
+			    $('#listaTareas > tbody:last-child').append('<tr><td>' + arrayItem._id + '</td><td>' + arrayItem.tareaTexto + '</td></tr>');
+			});			
+		}).catch(err => {
 			console.error(err)
 		});
 	}
 	
-</script>	
+</script>
 </head>
 <body>
-	
-	<h1>Borrar</h1>
-	<input type="button" value="borrar" onclick="borrar()" />
-	
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-xs-12">
+				<h3>Tareas</h3>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-4">
+				<div class="panel panel-default">
+					<div class="panel-body">
+						<div class="form-group">
+							<label for="tareaTexto">Tarea</label> <input class="form-control input-sm" type="text" id="tareaTexto">
+						</div>
+						<div class="form-group">
+							<button type="button" class="btn btn-primary btn-sm" onclick="insertar()">Insertar</button>
+						</div>
+					</div>
+				</div>
+				<div class="panel panel-default">
+					<div class="panel-body">
+						<div class="form-group">
+							<label for="tareaId">Id</label> <input class="form-control input-sm" type="text" id="tareaId">
+						</div>
+						<div class="form-group">
+							<button type="button" class="btn btn-primary btn-sm" onclick="borrar()">Borrar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-xs-8">
+				<div class="panel panel-default">
+					<div class="panel-body">
+						<table class="table" id="listaTareas">
+							<thead>
+								<tr>
+									<th>Id</th>
+									<th>Tarea</th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+						<div class="form-group">
+							<button type="button" class="btn btn-primary btn-sm" onclick="actualizar()">Actualizar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 	<!-- Include all compiled plugins (below), or include individual files as needed -->
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
+	<!-- Ejecutamos actualizar() al cargar la página -->
+	<script>
+	    $(document).ready(function() {
+	    	actualizar();
+	    });	
+	</script>
 </body>
 </html>
