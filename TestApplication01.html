@@ -52,6 +52,7 @@
 		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user => 
 			db.collection('TestCollection01').find({}).asArray()
 		).then(docs => {
+			$("#listaTareas > tbody").empty();
 			docs.forEach(function (arrayItem) {
 			    $('#listaTareas > tbody:last-child').append('<tr><td>' + arrayItem._id + '</td><td>' + arrayItem.tareaTexto + '</td></tr>');
 			});			
