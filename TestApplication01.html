@@ -24,41 +24,60 @@
 	
 	// insertar
 	function insertar() {
-		console.log('insertar');
-		if($('#tareaTexto').val()) {
-			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user => 
-				db.collection('TestCollection01').insertOne({'tareaTexto': $('#tareaTexto').val()})
-			).catch(err => {
-				console.error(err)
-			});			
+		var tareaTexto = $('#tareaTexto').val().trim();
+		console.log('insertando [' + tareaTexto + ']');
+		if(tareaTexto) {
+			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
+				user => {
+					db.collection('TestCollection01').insertOne({'tareaTexto': tareaTexto});
+					console.log('[' + tareaTexto + '] insertado');
+				}
+			).catch(
+				err => {
+					console.error(err);
+				}
+			);			
 		}
 	}	
 	
 	// borrar
 	function borrar() {
-		console.log('borrar');
-		if($('#tareaId').val()) {
-			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user => 
-				db.collection('TestCollection01').deleteMany({'_id':{'$oid':$('#tareaId').val()}})
-			).catch(err => {
-				console.error(err)
-			});
-		}
+		var tareaId = $('#tareaId').val().trim();
+		console.log('borrando [' + tareaId + ']');
+		if(tareaId) {
+			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
+				user => db.collection('TestCollection01').find({'_id':{'$oid':tareaId}}).asArray()
+			).then(
+				docs => {
+					db.collection('TestCollection01').deleteMany({'_id':{'$oid':tareaId}});
+					console.log('[' + tareaId + '] borrado');		
+				}
+			).catch(
+				err => {
+					console.error(err);
+				}
+			);	
+		}		
 	}
 	
 	// actualizar
 	function actualizar() {
 		console.log('actualizar');
-		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user => 
-			db.collection('TestCollection01').find({}).asArray()
-		).then(docs => {
-			$("#listaTareas > tbody").empty();
-			docs.forEach(function (arrayItem) {
-			    $('#listaTareas > tbody:last-child').append('<tr><td>' + arrayItem._id + '</td><td>' + arrayItem.tareaTexto + '</td></tr>');
-			});			
-		}).catch(err => {
-			console.error(err)
-		});
+		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
+			user => db.collection('TestCollection01').find({}).asArray()
+		).then(
+			docs => {
+				console.log(docs);
+				$("#listaTareas > tbody").empty();
+				docs.forEach(function (arrayItem) {
+			    	$('#listaTareas > tbody:last-child').append('<tr><td>' + arrayItem._id + '</td><td>' + arrayItem.tareaTexto + '</td></tr>');
+				});			
+			}
+		).catch(
+			err => {
+				console.error(err);
+			}
+		);
 	}
 	
 </script>
