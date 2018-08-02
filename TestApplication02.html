@@ -28,15 +28,21 @@
 		console.log('insertando [' + tareaTexto + ']');
 		if(tareaTexto) {
 			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
-				user => {
-					db.collection('TestCollection01').insertOne({'tareaTexto': tareaTexto});
-					console.log('[' + tareaTexto + '] insertado');
+				user => db.collection('TestCollection01').find({}).asArray()
+			).then(
+				listaTareas => db.collection('TestCollection01').insertOne({'tareaId':listaTareas.length, 'tareaTexto':tareaTexto})
+			).then(
+				result => {
+					if(result) {
+						console.log('insertada tarea [' + tareaTexto + '] con ObjectId [' + result.insertedId + ']')
+					}
 				}
+			).then(
+				() => actualizar()
 			).catch(
-				err => {
-					console.error(err);
-				}
-			);			
+				err => console.error(err)
+			);	
+			$('#tareaTexto').val('');
 		}
 	}	
 	
@@ -46,17 +52,27 @@
 		console.log('borrando [' + tareaId + ']');
 		if(tareaId) {
 			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
-				user => db.collection('TestCollection01').find({'_id':{'$oid':tareaId}}).asArray()
+				user => db.collection('TestCollection01').find({'tareaId':parseInt(tareaId)}).asArray()
 			).then(
-				docs => {
-					db.collection('TestCollection01').deleteMany({'_id':{'$oid':tareaId}});
-					console.log('[' + tareaId + '] borrado');		
+				listaTareas => {
+					if(listaTareas.length > 0) {
+						return db.collection('TestCollection01').deleteMany({'tareaId':parseInt(tareaId)})
+					}
 				}
+			).then(
+				result => {
+					if(result) {
+						console.log('borradas [' + result.deletedCount + '] tareas con id [' + tareaId + ']')
+					}
+				}
+			).then(
+				() => regenerarIdentificadores()
+			).then(
+				() => actualizar()
 			).catch(
-				err => {
-					console.error(err);
-				}
+				err => console.error(err)
 			);	
+			$('#tareaId').val('');
 		}		
 	}
 	
@@ -66,17 +82,34 @@
 		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
 			user => db.collection('TestCollection01').find({}).asArray()
 		).then(
-			docs => {
-				console.log(docs);
-				$("#listaTareas > tbody").empty();
-				docs.forEach(function (arrayItem) {
-			    	$('#listaTareas > tbody:last-child').append('<tr><td>' + arrayItem._id + '</td><td>' + arrayItem.tareaTexto + '</td></tr>');
+			listaTareas => {
+				console.log(listaTareas);
+				$('#listaTareas > tbody').empty();
+				listaTareas.forEach(function (arrayItem) {
+			    	$('#listaTareas > tbody:last-child').append('<tr><td>' + arrayItem.tareaId + '</td><td>' + arrayItem.tareaTexto + '</td></tr>');
 				});			
 			}
 		).catch(
-			err => {
-				console.error(err);
+			err => console.error(err)
+		);
+	}
+	
+	// regenerarTareaId
+	function regenerarIdentificadores() {
+		console.log('regenerarTareaId');
+		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
+			user => db.collection('TestCollection01').find({}).asArray()
+		).then(
+			listaTareas => {
+				console.log(listaTareas);
+				var nuevoId = 0;
+				listaTareas.forEach(function (arrayItem) {
+					db.collection('TestCollection01').updateOne({'tareaId':arrayItem.tareaId}, {'$set': {'tareaId': nuevoId}});
+					nuevoId++;
+				});			
 			}
+		).catch(
+			err => console.error(err)
 		);
 	}
 	
