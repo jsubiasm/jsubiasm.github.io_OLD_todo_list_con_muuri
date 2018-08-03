@@ -104,7 +104,11 @@
 				console.log(listaTareas);
 				var nuevoId = 0;
 				listaTareas.forEach(function (arrayItem) {
-					db.collection('TestCollection01').updateOne({'tareaId':arrayItem.tareaId}, {'$set': {'tareaId': nuevoId}});
+					db.collection('TestCollection01').updateOne({'tareaId':arrayItem.tareaId}, {'$set': {'tareaId': nuevoId}}).then(
+						() => actualizar()
+					).catch(
+						err => console.error(err)
+					);
 					nuevoId++;
 				});			
 			}
