@@ -127,37 +127,35 @@
 <body>
 	<div class="board">
 		<div class="board-column todo">
-			<div class="board-column-header"><h1>//TODO:</h1></div>
+			<div class="board-column-header">
+				<h1>//TODO:</h1>
+			</div>
 			<div class="board-column-content">
 				<div class="board-item">
 					<div class="board-item-content">
-						<span>//TODO: ITEM 1</span>
-						<span class="glyphicon glyphicon-remove icon-color icon-remove"></span>
+						<span>//TODO: ITEM 1</span> <span class="glyphicon glyphicon-remove icon-color icon-remove"></span>
 					</div>
 				</div>
 				<div class="board-item">
 					<div class="board-item-content">
-						<span>//TODO: ITEM 2</span>
-						<span class="glyphicon glyphicon-remove icon-color icon-remove"></span>
+						<span>//TODO: ITEM 2</span> <span class="glyphicon glyphicon-remove icon-color icon-remove"></span>
 					</div>
 				</div>
 				<div class="board-item">
 					<div class="board-item-content">
-						<span>//TODO: ITEM 3</span>
-						<span class="glyphicon glyphicon-remove icon-color icon-remove"></span>
+						<span>//TODO: ITEM 3</span> <span class="glyphicon glyphicon-remove icon-color icon-remove"></span>
 					</div>
 				</div>
 				<div class="board-item">
 					<div class="board-item-content">
-						<span>//TODO: ITEM 4</span>
-						<span class="glyphicon glyphicon-remove icon-color icon-remove"></span>
+						<span>//TODO: ITEM 4</span> <span class="glyphicon glyphicon-remove icon-color icon-remove"></span>
 					</div>
 				</div>
 				<div class="board-item">
 					<div class="board-item-content">
 						<span class="glyphicon glyphicon-plus icon-color icon-plus"></span>
 					</div>
-				</div>				
+				</div>
 			</div>
 		</div>
 	</div>
@@ -198,6 +196,7 @@
 				// duration of the drag.
 				item.getElement().style.width = item.getWidth() + 'px';
 				item.getElement().style.height = item.getHeight() + 'px';
+				console.log('dragStart');
 			}).on('dragReleaseEnd', function(item)
 			{
 				// Let's remove the fixed width/height from the
@@ -213,17 +212,37 @@
 				{
 					grid.refreshItems();
 				});
+				console.log('dragReleaseEnd');
 			}).on('layoutStart', function()
 			{
 				// Let's keep the board grid up to date with the
 				// dimensions changes of column grids.
 				boardGrid.refreshItems().layout();
-			});
-
+				console.log('layoutStart');
+			}).on('synchronize', function () { console.log('synchronize'); 
+			}).on('layoutEnd', function (items) { console.log('layoutEnd'); 
+			}).on('add', function (items) { console.log('add'); 
+			}).on('remove', function (items, indices) { console.log('remove'); 
+			}).on('showStart', function (items) { console.log('showStart'); 
+			}).on('showEnd', function (items) { console.log('showEnd'); 
+			}).on('hideStart', function (items) { console.log('hideStart'); 
+			}).on('hideEnd', function (items) { console.log('hideEnd'); 
+			}).on('filter', function (shownItems, hiddenItems) { console.log('filter'); 
+			}).on('sort', function (currentOrder, previousOrder) { console.log('sort'); 
+			}).on('move', function (data) { console.log('move'); 
+			}).on('send', function (data) { console.log('send'); 
+			}).on('beforeSend', function (data) { console.log('beforeSend'); 
+			}).on('receive', function (data) { console.log('receive'); 
+			}).on('beforeReceive', function (data) { console.log('beforeReceive'); 
+			}).on('dragInit', function (item, event) { console.log('dragInit'); 
+			}).on('dragMove', function (item, event) { console.log('dragMove'); 
+			}).on('dragScroll', function (item, event) { console.log('dragScroll'); 
+			}).on('dragEnd', function (item, event) { console.log('dragEnd'); 
+			}).on('dragReleaseStart', function (item) { console.log('dragReleaseStart'); 
+			}).on('destroy', function () { console.log('destroy'); });			
 			// Add the column grid reference to the column grids
 			// array, so we can access it later on.
 			columnGrids.push(grid);
-
 		});
 
 		// Instantiate the board grid so we can drag those
@@ -239,7 +258,7 @@
 			dragReleaseDuration : 400,
 			dragReleaseEasing : 'ease'
 		});
-	</script>	
+	</script>
 	<!-- Ejecutamos actualizar() al cargar la página -->
 	<script>
 	    $(document).ready(function() {
