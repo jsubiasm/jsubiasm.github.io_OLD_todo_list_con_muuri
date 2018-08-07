@@ -287,7 +287,8 @@
 		
 		// getTareaDOM
 		function getTareaDOM() {
-			var tareaDOMString = '<div class=\"board-item\"><div class=\"board-item-content\"><span>//TODO: ITEM 9</span> <span class=\"glyphicon glyphicon-trash icon-color icon-trash\" id=\"tarea09Remove\"></span></div></div>';
+			var itemCount = columnGrids[0].getItems().length + 1;
+			var tareaDOMString = '<div class=\"board-item\"><div class=\"board-item-content\"><span>//TODO: ITEM ' + itemCount + '</span> <span class=\"glyphicon glyphicon-trash icon-color icon-trash\" id=\"tarea' + itemCount + 'Remove\"></span></div></div>';
 			var div = document.createElement('div');
 			div.innerHTML = tareaDOMString.trim();
 			return div.firstChild; 
@@ -298,8 +299,7 @@
 			var tareaAddTexto = $('#tareaAddTexto').val().trim();
 			console.log('tareaAdd [' + tareaAddTexto + ']');
 			var tareaDOM = getTareaDOM();
-			var grid = columnGrids[0];
-			grid.add(tareaDOM);
+			columnGrids[0].add(tareaDOM);
 		}		
 		
 	</script>
