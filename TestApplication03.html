@@ -131,46 +131,16 @@
 				<h1>//TODO:</h1>
 			</div>
 			<div class="board-column-content">
-				<div class="board-item">
+				<div class="board-item" id="item_0">
 					<div class="board-item-content">
-						<span>//TODO: ITEM 1</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="tarea01Remove"></span>
+						<span>//TODO: ITEM 0</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="itemRemove_0"></span>
 					</div>
 				</div>
-				<div class="board-item">
+				<div class="board-item" id="item_1">
 					<div class="board-item-content">
-						<span>//TODO: ITEM 2</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="tarea02Remove"></span>
+						<span>//TODO: ITEM 1</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="itemRemove_1"></span>
 					</div>
 				</div>
-				<!-- div class="board-item">
-					<div class="board-item-content">
-						<span>//TODO: ITEM 3</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="tarea03Remove"></span>
-					</div>
-				</div>
-				<div class="board-item">
-					<div class="board-item-content">
-						<span>//TODO: ITEM 4</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="tarea04Remove"></span>
-					</div>
-				</div>
-				<div class="board-item">
-					<div class="board-item-content">
-						<span>//TODO: ITEM 5</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="tarea05Remove"></span>
-					</div>
-				</div>
-				<div class="board-item">
-					<div class="board-item-content">
-						<span>//TODO: ITEM 6</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="tarea06Remove"></span>
-					</div>
-				</div>
-				<div class="board-item">
-					<div class="board-item-content">
-						<span>//TODO: ITEM 7</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="tarea07Remove"></span>
-					</div>
-				</div>
-				<div class="board-item">
-					<div class="board-item-content">
-						<span>//TODO: ITEM 8</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="tarea08Remove"></span>
-					</div>
-				</div -->
 			</div>
 			<div class="board-column-footer">
 				<form class="form-horizontal">
@@ -243,6 +213,9 @@
 			).on('dragInit', function (item, event) 
 			{ 
 				console.log('dragInit.event.target.id [' + event.target.id + ']');
+				if(event.target.id.includes('itemRemove_')) {
+					tareaRemove(event.target.id);
+				}
 			}			
 			).on('dragMove', function (item, event) 
 			{ 
@@ -287,8 +260,8 @@
 		
 		// getTareaDOM
 		function getTareaDOM() {
-			var itemCount = columnGrids[0].getItems().length + 1;
-			var tareaDOMString = '<div class=\"board-item\"><div class=\"board-item-content\"><span>//TODO: ITEM ' + itemCount + '</span> <span class=\"glyphicon glyphicon-trash icon-color icon-trash\" id=\"tarea' + itemCount + 'Remove\"></span></div></div>';
+			var itemCount = columnGrids[0].getItems().length;
+			var tareaDOMString = '<div class=\"board-item\" id=\"item_' + itemCount + '\"><div class=\"board-item-content\"><span>//TODO: ITEM ' + itemCount + '</span> <span class=\"glyphicon glyphicon-trash icon-color icon-trash\" id=\"itemRemove_' + itemCount + '\"></span></div></div>';
 			var div = document.createElement('div');
 			div.innerHTML = tareaDOMString.trim();
 			return div.firstChild; 
@@ -300,7 +273,23 @@
 			console.log('tareaAdd [' + tareaAddTexto + ']');
 			var tareaDOM = getTareaDOM();
 			columnGrids[0].add(tareaDOM);
-		}		
+		}	
+		
+		// tareaRemove
+		function tareaRemove(itemRemoveId) {
+			var idElementToRemove = 'item_' + itemRemoveId.split('_')[1];
+			var itemsArray = columnGrids[0].getItems();
+			var arrayLength = itemsArray.length;
+			for (var i = 0; i < arrayLength; i++) {
+				var item = itemsArray[i];
+				if(item.getElement().id === idElementToRemove) {
+					columnGrids[0].remove(item, {removeElements: true});
+					columnGrids[0].hide(item);
+					var element = document.getElementById(idElementToRemove);
+					document.body.removeChild( element );
+				}
+			}
+		}
 		
 	</script>
 	<!-- Ejecutamos actualizar() al cargar la página -->
