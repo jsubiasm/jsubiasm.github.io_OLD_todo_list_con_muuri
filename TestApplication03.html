@@ -131,7 +131,7 @@
 				<h1>//TODO:</h1>
 			</div>
 			<div class="board-column-content">
-				<div class="board-item" id="item_0">
+				<!-- div class="board-item" id="item_0">
 					<div class="board-item-content">
 						<span>//TODO: ITEM 0</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="itemRemove_0"></span>
 					</div>
@@ -140,16 +140,16 @@
 					<div class="board-item-content">
 						<span>//TODO: ITEM 1</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="itemRemove_1"></span>
 					</div>
-				</div>
+				</div -->
 			</div>
 			<div class="board-column-footer">
 				<form class="form-horizontal">
 					<div class="form-group">
 						<div class="col-sm-10">
-							<input type="text" class="form-control" id="tareaAddTexto">
+							<input type="text" class="form-control" id="tareaAddTexto" onkeyup="tareaTextoKeyUp()">
 						</div>
 						<div class="col-sm-2">
-							<button type="button" class="btn btn-warning btn-lg" onclick="tareaAdd()">
+							<button type="button" class="btn btn-warning btn-lg" id="tareaAddBoton" onclick="tareaAdd()" disabled="disabled">
 								<span class="glyphicon glyphicon-plus"></span> Add
 							</button>
 						</div>
@@ -273,6 +273,8 @@
 			console.log('tareaAdd [' + tareaAddTexto + ']');
 			var tareaDOM = getTareaDOM();
 			columnGrids[0].add(tareaDOM);
+			 $('#tareaAddTexto').val('');
+			 tareaTextoKeyUp();
 		}	
 		
 		// tareaRemove
@@ -283,11 +285,19 @@
 			for (var i = 0; i < arrayLength; i++) {
 				var item = itemsArray[i];
 				if(item.getElement().id === idElementToRemove) {
-					columnGrids[0].remove(item, {removeElements: true});
 					columnGrids[0].hide(item);
-					var element = document.getElementById(idElementToRemove);
-					document.body.removeChild( element );
 				}
+			}
+		}
+		
+		// tareaTextoKeyUp
+		function tareaTextoKeyUp() {
+			var tareaAddTexto = $('#tareaAddTexto').val().trim();
+			if(tareaAddTexto && tareaAddTexto.length > 0) {
+				$('#tareaAddBoton').prop("disabled",false);
+			}
+			else {
+				$('#tareaAddBoton').prop("disabled",true);
 			}
 		}
 		
