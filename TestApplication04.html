@@ -26,6 +26,9 @@
 	
 	// cliente base de datos
 	const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('TestDatabase01');
+	
+  	// variables
+	var interaccionPermitida = true;	
 		
 	// insertar
 	function insertar(tareaTexto, tareaId) {
@@ -39,6 +42,8 @@
 					if(result) {
 						console.log('insertada tarea [' + tareaId + '] [' + tareaTexto + '] con ObjectId [' + result.insertedId + ']')
 					}
+					$('#tareaAddBoton').prop("disabled",false);
+					interaccionPermitida = true;
 				}
 			).catch(
 				err => console.error(err)
@@ -63,11 +68,8 @@
 					if(result) {
 						console.log('borradas [' + result.deletedCount + '] tareas con id [' + tareaId + ']')
 					}
+					regenerarIdentificadores();					
 				}
-			).then(
-				() => regenerarIdentificadores()
-			).then(
-				() => actualizar()
 			).catch(
 				err => console.error(err)
 			);	
@@ -101,9 +103,17 @@
 			listaTareas => {
 				console.log(listaTareas);
 				var nuevoId = 0;
+				var tareasActualizadas = 0;
 				listaTareas.forEach(function (arrayItem) {
 					db.collection('TestCollection01').updateOne({'tareaId':arrayItem.tareaId}, {'$set': {'tareaId': nuevoId}}).then(
-						() => actualizar()
+						() => {
+							tareasActualizadas++;
+							if(tareasActualizadas === listaTareas.length) {
+								actualizar();
+								$('#tareaAddBoton').prop("disabled",false);
+								interaccionPermitida = true;									
+							}
+						}
 					).catch(
 						err => console.error(err)
 					);
@@ -142,7 +152,7 @@
 							<input type="text" class="form-control" id="tareaAddTexto" onkeyup="tareaTextoKeyUp()">
 						</div>
 						<div class="col-sm-2">
-							<button type="button" class="btn btn-warning btn-lg" id="tareaAddBoton" onclick="tareaAdd()" disabled="disabled">
+							<button type="button" class="btn btn-warning btn-lg" id="tareaAddBoton" onclick="tareaAdd()">
 								<span class="glyphicon glyphicon-plus"></span> Add
 							</button>
 						</div>
@@ -183,12 +193,14 @@
 			}
 			).on('dragStart', function(item)
 			{
+				console.log('dragStart');
 				// Let's set fixed widht/height to the dragged item so that it does not stretch unwillingly when it's appended to the document body for the duration of the drag.
 				item.getElement().style.width = item.getWidth() + 'px';
 				item.getElement().style.height = item.getHeight() + 'px';
 			}
 			).on('dragReleaseEnd', function(item)
 			{
+				console.log('dragReleaseEnd');
 				// Let's remove the fixed width/height from the dragged item now that it is back in a grid column and can freely adjust to it's surroundings.
 				item.getElement().style.width = '';
 				item.getElement().style.height = '';
@@ -201,6 +213,7 @@
 			).on('layoutStart', function()
 			{
 				// Let's keep the board grid up to date with the dimensions changes of column grids.
+				console.log('layoutStart');
 				boardGrid.refreshItems().layout();
 			}
 			).on('dragInit', function (item, event) 
@@ -262,39 +275,46 @@
 		// tareaAdd
 		function tareaAdd() {
 			var tareaAddTexto = $('#tareaAddTexto').val().trim();
-			console.log('tareaAdd [' + tareaAddTexto + ']');
-			var itemCount = columnGrids[0].getItems().length;
-			var tareaDOM = getTareaDOM(tareaAddTexto, itemCount);
-			columnGrids[0].add(tareaDOM);
-			insertar(tareaAddTexto, itemCount);
-			$('#tareaAddTexto').val('');
-			tareaTextoKeyUp();
+			if(interaccionPermitida && tareaAddTexto && tareaAddTexto.length > 0) {
+				interaccionPermitida = false;
+				$('#tareaAddBoton').prop("disabled",true);
+				console.log('tareaAdd [' + tareaAddTexto + ']');
+				var itemCount = columnGrids[0].getItems().length;
+				var tareaDOM = getTareaDOM(tareaAddTexto, itemCount);
+				columnGrids[0].add(tareaDOM);
+				insertar(tareaAddTexto, itemCount);
+				$('#tareaAddTexto').val('');				
+			}
 		}
 		
 		// tareaRemove
 		function tareaRemove(itemRemoveId) {
-			var id = itemRemoveId.split('_')[1];
-			var idElementToRemove = 'item_' + id;
-			var itemsArray = columnGrids[0].getItems();
-			var arrayLength = itemsArray.length;
-			for (var i = 0; i < arrayLength; i++) {
-				var item = itemsArray[i];
-				if(item.getElement().id === idElementToRemove) {
-					columnGrids[0].hide(item);
-					borrar(id);
+			if(interaccionPermitida) {
+				var id = itemRemoveId.split('_')[1];
+				var idElementToRemove = 'item_' + id;
+				var itemsArray = columnGrids[0].getItems();
+				var arrayLength = itemsArray.length;
+				for (var i = 0; i < arrayLength; i++) {
+					var item = itemsArray[i];
+					if(item.getElement().id === idElementToRemove) {
+						columnGrids[0].hide(item);
+						interaccionPermitida = false;
+						$('#tareaAddBoton').prop("disabled",true);					
+						borrar(id);
+					}
 				}
 			}
 		}
 		
 		// tareaTextoKeyUp
 		function tareaTextoKeyUp() {
-			var tareaAddTexto = $('#tareaAddTexto').val().trim();
+			/*var tareaAddTexto = $('#tareaAddTexto').val().trim();
 			if(tareaAddTexto && tareaAddTexto.length > 0) {
 				$('#tareaAddBoton').prop("disabled",false);
 			}
 			else {
 				$('#tareaAddBoton').prop("disabled",true);
-			}
+			}*/
 		}
 		
 		// vaciarListaTareas
@@ -309,7 +329,7 @@
 		
 		// tareaAddTexto
 		function tareaActualizarTexto(tareaTexto, tareaId) {
-			console.log('tareaAdd [' + tareaTexto.trim() + ']');
+			console.log('tareaActualizarTexto [' + tareaId + '] [' + tareaTexto + ']');
 			var tareaDOM = getTareaDOM(tareaTexto.trim(), tareaId);
 			columnGrids[0].add(tareaDOM);
 		}		
