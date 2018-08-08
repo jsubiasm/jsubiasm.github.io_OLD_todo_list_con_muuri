@@ -26,34 +26,28 @@
 	
 	// cliente base de datos
 	const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('TestDatabase01');
-	
+		
 	// insertar
-	function insertar() {
-		var tareaTexto = $('#tareaTexto').val().trim();
-		console.log('insertando [' + tareaTexto + ']');
+	function insertar(tareaTexto, tareaId) {
+		console.log('insertando [' + tareaId + '] [' + tareaTexto + ']');
 		if(tareaTexto) {
-			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
-				user => db.collection('TestCollection01').find({}).asArray()
+			client.auth.loginWithCredential(new stitch.AnonymousCredential()
 			).then(
-				listaTareas => db.collection('TestCollection01').insertOne({'tareaId':listaTareas.length, 'tareaTexto':tareaTexto})
+				user => db.collection('TestCollection01').insertOne({'tareaId':tareaId, 'tareaTexto':tareaTexto})
 			).then(
 				result => {
 					if(result) {
-						console.log('insertada tarea [' + tareaTexto + '] con ObjectId [' + result.insertedId + ']')
+						console.log('insertada tarea [' + tareaId + '] [' + tareaTexto + '] con ObjectId [' + result.insertedId + ']')
 					}
 				}
-			).then(
-				() => actualizar()
 			).catch(
 				err => console.error(err)
 			);	
-			$('#tareaTexto').val('');
 		}
 	}	
 	
 	// borrar
-	function borrar() {
-		var tareaId = $('#tareaId').val().trim();
+	function borrar(tareaId) {
 		console.log('borrando [' + tareaId + ']');
 		if(tareaId) {
 			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
@@ -77,7 +71,6 @@
 			).catch(
 				err => console.error(err)
 			);	
-			$('#tareaId').val('');
 		}		
 	}
 	
@@ -89,19 +82,19 @@
 		).then(
 			listaTareas => {
 				console.log(listaTareas);
-				$('#listaTareas > tbody').empty();
+				vaciarListaTareas();
 				listaTareas.forEach(function (arrayItem) {
-			    	$('#listaTareas > tbody:last-child').append('<tr><td>' + arrayItem.tareaId + '</td><td>' + arrayItem.tareaTexto + '</td></tr>');
+			    	tareaActualizarTexto(arrayItem.tareaTexto, arrayItem.tareaId);
 				});			
 			}
 		).catch(
 			err => console.error(err)
 		);
-	}
+	}	
 	
-	// regenerarTareaId
+	// regenerarIdentificadores
 	function regenerarIdentificadores() {
-		console.log('regenerarTareaId');
+		console.log('regenerarIdentificadores');
 		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
 			user => db.collection('TestCollection01').find({}).asArray()
 		).then(
@@ -259,9 +252,8 @@
 		});
 		
 		// getTareaDOM
-		function getTareaDOM() {
-			var itemCount = columnGrids[0].getItems().length;
-			var tareaDOMString = '<div class=\"board-item\" id=\"item_' + itemCount + '\"><div class=\"board-item-content\"><span>//TODO: ITEM ' + itemCount + '</span> <span class=\"glyphicon glyphicon-trash icon-color icon-trash\" id=\"itemRemove_' + itemCount + '\"></span></div></div>';
+		function getTareaDOM(tareaTexto, tareaId) {
+			var tareaDOMString = '<div class=\"board-item\" id=\"item_' + tareaId + '\"><div class=\"board-item-content\"><span>' + tareaTexto + ' [item' + tareaId + ']</span> <span class=\"glyphicon glyphicon-trash icon-color icon-trash\" id=\"itemRemove_' + tareaId + '\"></span></div></div>';
 			var div = document.createElement('div');
 			div.innerHTML = tareaDOMString.trim();
 			return div.firstChild; 
@@ -271,21 +263,25 @@
 		function tareaAdd() {
 			var tareaAddTexto = $('#tareaAddTexto').val().trim();
 			console.log('tareaAdd [' + tareaAddTexto + ']');
-			var tareaDOM = getTareaDOM();
+			var itemCount = columnGrids[0].getItems().length;
+			var tareaDOM = getTareaDOM(tareaAddTexto, itemCount);
 			columnGrids[0].add(tareaDOM);
-			 $('#tareaAddTexto').val('');
-			 tareaTextoKeyUp();
-		}	
+			insertar(tareaAddTexto, itemCount);
+			$('#tareaAddTexto').val('');
+			tareaTextoKeyUp();
+		}
 		
 		// tareaRemove
 		function tareaRemove(itemRemoveId) {
-			var idElementToRemove = 'item_' + itemRemoveId.split('_')[1];
+			var id = itemRemoveId.split('_')[1];
+			var idElementToRemove = 'item_' + id;
 			var itemsArray = columnGrids[0].getItems();
 			var arrayLength = itemsArray.length;
 			for (var i = 0; i < arrayLength; i++) {
 				var item = itemsArray[i];
 				if(item.getElement().id === idElementToRemove) {
 					columnGrids[0].hide(item);
+					borrar(id);
 				}
 			}
 		}
@@ -300,6 +296,23 @@
 				$('#tareaAddBoton').prop("disabled",true);
 			}
 		}
+		
+		// vaciarListaTareas
+		function vaciarListaTareas() {
+			var itemsArray = columnGrids[0].getItems();
+			var arrayLength = itemsArray.length;
+			for (var i = 0; i < arrayLength; i++) {
+				var item = itemsArray[i];
+				columnGrids[0].hide(item);
+			}
+		}		
+		
+		// tareaAddTexto
+		function tareaActualizarTexto(tareaTexto, tareaId) {
+			console.log('tareaAdd [' + tareaTexto.trim() + ']');
+			var tareaDOM = getTareaDOM(tareaTexto.trim(), tareaId);
+			columnGrids[0].add(tareaDOM);
+		}		
 		
 	</script>
 	<!-- Ejecutamos actualizar() al cargar la página -->
