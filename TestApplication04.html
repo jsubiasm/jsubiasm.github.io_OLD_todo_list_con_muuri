@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- This 3 required meta tags *must* come first in the head; any other head content must come *after* these tags -->
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Title -->
+<title>TestApplication04</title>
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+<!-- MongoDB Stitch -->
+<script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.0.8/stitch.js"></script>
+<!-- MUURI -->
+<script src="./muuri/web-animations.min.js"></script>
+<script src="./muuri/hammer.js"></script>
+<script src="./muuri/muuri.js"></script>
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="./estilos.css">
+<!-- Javascript -->
+<script>
+  
+	// cliente de la aplicación
+	const client = stitch.Stitch.initializeDefaultAppClient('testapplication01-begti');
+	
+	// cliente base de datos
+	const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('TestDatabase01');
+	
+	// insertar
+	function insertar() {
+		var tareaTexto = $('#tareaTexto').val().trim();
+		console.log('insertando [' + tareaTexto + ']');
+		if(tareaTexto) {
+			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
+				user => db.collection('TestCollection01').find({}).asArray()
+			).then(
+				listaTareas => db.collection('TestCollection01').insertOne({'tareaId':listaTareas.length, 'tareaTexto':tareaTexto})
+			).then(
+				result => {
+					if(result) {
+						console.log('insertada tarea [' + tareaTexto + '] con ObjectId [' + result.insertedId + ']')
+					}
+				}
+			).then(
+				() => actualizar()
+			).catch(
+				err => console.error(err)
+			);	
+			$('#tareaTexto').val('');
+		}
+	}	
+	
+	// borrar
+	function borrar() {
+		var tareaId = $('#tareaId').val().trim();
+		console.log('borrando [' + tareaId + ']');
+		if(tareaId) {
+			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
+				user => db.collection('TestCollection01').find({'tareaId':parseInt(tareaId)}).asArray()
+			).then(
+				listaTareas => {
+					if(listaTareas.length > 0) {
+						return db.collection('TestCollection01').deleteMany({'tareaId':parseInt(tareaId)})
+					}
+				}
+			).then(
+				result => {
+					if(result) {
+						console.log('borradas [' + result.deletedCount + '] tareas con id [' + tareaId + ']')
+					}
+				}
+			).then(
+				() => regenerarIdentificadores()
+			).then(
+				() => actualizar()
+			).catch(
+				err => console.error(err)
+			);	
+			$('#tareaId').val('');
+		}		
+	}
+	
+	// actualizar
+	function actualizar() {
+		console.log('actualizar');
+		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
+			user => db.collection('TestCollection01').find({}).asArray()
+		).then(
+			listaTareas => {
+				console.log(listaTareas);
+				$('#listaTareas > tbody').empty();
+				listaTareas.forEach(function (arrayItem) {
+			    	$('#listaTareas > tbody:last-child').append('<tr><td>' + arrayItem.tareaId + '</td><td>' + arrayItem.tareaTexto + '</td></tr>');
+				});			
+			}
+		).catch(
+			err => console.error(err)
+		);
+	}
+	
+	// regenerarTareaId
+	function regenerarIdentificadores() {
+		console.log('regenerarTareaId');
+		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
+			user => db.collection('TestCollection01').find({}).asArray()
+		).then(
+			listaTareas => {
+				console.log(listaTareas);
+				var nuevoId = 0;
+				listaTareas.forEach(function (arrayItem) {
+					db.collection('TestCollection01').updateOne({'tareaId':arrayItem.tareaId}, {'$set': {'tareaId': nuevoId}}).then(
+						() => actualizar()
+					).catch(
+						err => console.error(err)
+					);
+					nuevoId++;
+				});			
+			}
+		).catch(
+			err => console.error(err)
+		);
+	}
+	
+</script>
+</head>
+<body>
+	<div class="board">
+		<div class="board-column todo">
+			<div class="board-column-header">
+				<h1>//TODO:</h1>
+			</div>
+			<div class="board-column-content">
+				<!-- div class="board-item" id="item_0">
+					<div class="board-item-content">
+						<span>//TODO: ITEM 0</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="itemRemove_0"></span>
+					</div>
+				</div>
+				<div class="board-item" id="item_1">
+					<div class="board-item-content">
+						<span>//TODO: ITEM 1</span> <span class="glyphicon glyphicon-trash icon-color icon-trash" id="itemRemove_1"></span>
+					</div>
+				</div -->
+			</div>
+			<div class="board-column-footer">
+				<form class="form-horizontal">
+					<div class="form-group">
+						<div class="col-sm-10">
+							<input type="text" class="form-control" id="tareaAddTexto" onkeyup="tareaTextoKeyUp()">
+						</div>
+						<div class="col-sm-2">
+							<button type="button" class="btn btn-warning btn-lg" id="tareaAddBoton" onclick="tareaAdd()" disabled="disabled">
+								<span class="glyphicon glyphicon-plus"></span> Add
+							</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<!-- Include all compiled plugins (below), or include individual files as needed -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	<!-- Inicializamos MUURI -->
+	<script>
+	
+		// vars
+		var itemContainers = [].slice.call(document.querySelectorAll('.board-column-content'));
+		var columnGrids = [];
+		var boardGrid;
+		
+		// Define the column grids so we can drag those items around.
+		itemContainers.forEach(function(container)
+		{
+			// Instantiate column grid.
+			var grid = new Muuri(container, {
+				items : '.board-item',
+				layoutDuration : 400,
+				layoutEasing : 'ease',
+				dragEnabled : true,
+				dragSort : function()
+				{
+					return columnGrids;
+				},
+				dragSortInterval : 0,
+				dragContainer : document.body,
+				dragReleaseDuration : 400,
+				dragReleaseEasing : 'ease'
+			}
+			).on('dragStart', function(item)
+			{
+				// Let's set fixed widht/height to the dragged item so that it does not stretch unwillingly when it's appended to the document body for the duration of the drag.
+				item.getElement().style.width = item.getWidth() + 'px';
+				item.getElement().style.height = item.getHeight() + 'px';
+			}
+			).on('dragReleaseEnd', function(item)
+			{
+				// Let's remove the fixed width/height from the dragged item now that it is back in a grid column and can freely adjust to it's surroundings.
+				item.getElement().style.width = '';
+				item.getElement().style.height = '';
+				// Just in case, let's refresh the dimensions of all items in case dragging the item caused some other items to be different size.
+				columnGrids.forEach(function(grid)
+				{
+					grid.refreshItems();
+				});
+			}
+			).on('layoutStart', function()
+			{
+				// Let's keep the board grid up to date with the dimensions changes of column grids.
+				boardGrid.refreshItems().layout();
+			}
+			).on('dragInit', function (item, event) 
+			{ 
+				console.log('dragInit.event.target.id [' + event.target.id + ']');
+				if(event.target.id.includes('itemRemove_')) {
+					tareaRemove(event.target.id);
+				}
+			}			
+			).on('dragMove', function (item, event) 
+			{ 
+				console.log('dragMove.event.target.id [' + event.target.id + ']');
+			}	
+			).on('synchronize', function () { console.log('synchronize'); }
+			).on('layoutEnd', function (items) { console.log('layoutEnd'); }
+			).on('add', function (items) { console.log('add'); }
+			).on('remove', function (items, indices) { console.log('remove'); }
+			).on('showStart', function (items) { console.log('showStart'); }
+			).on('showEnd', function (items) { console.log('showEnd'); }
+			).on('hideStart', function (items) { console.log('hideStart'); }
+			).on('hideEnd', function (items) { console.log('hideEnd'); }
+			).on('filter', function (shownItems, hiddenItems) { console.log('filter'); }
+			).on('sort', function (currentOrder, previousOrder) { console.log('sort'); }
+			).on('move', function (data) { console.log('move'); }
+			).on('send', function (data) { console.log('send'); }
+			).on('beforeSend', function (data) { console.log('beforeSend'); }
+			).on('receive', function (data) { console.log('receive'); }
+			).on('beforeReceive', function (data) { console.log('beforeReceive'); }
+			).on('dragScroll', function (item, event) { console.log('dragScroll'); }
+			).on('dragEnd', function (item, event) { console.log('dragEnd'); }
+			).on('dragReleaseStart', function (item) { console.log('dragReleaseStart'); }
+			).on('destroy', function () { console.log('destroy'); }
+			);					
+			// Add the column grid reference to the column grids array, so we can access it later on.
+			columnGrids.push(grid);
+		});
+
+		// Instantiate the board grid so we can drag those columns around.
+		boardGrid = new Muuri('.board', {
+			layoutDuration : 400,
+			layoutEasing : 'ease',
+			dragEnabled : true,
+			dragSortInterval : 0,
+			dragStartPredicate : {
+				handle : '.board-column-header'
+			},
+			dragReleaseDuration : 400,
+			dragReleaseEasing : 'ease'
+		});
+		
+		// getTareaDOM
+		function getTareaDOM() {
+			var itemCount = columnGrids[0].getItems().length;
+			var tareaDOMString = '<div class=\"board-item\" id=\"item_' + itemCount + '\"><div class=\"board-item-content\"><span>//TODO: ITEM ' + itemCount + '</span> <span class=\"glyphicon glyphicon-trash icon-color icon-trash\" id=\"itemRemove_' + itemCount + '\"></span></div></div>';
+			var div = document.createElement('div');
+			div.innerHTML = tareaDOMString.trim();
+			return div.firstChild; 
+		}
+		
+		// tareaAdd
+		function tareaAdd() {
+			var tareaAddTexto = $('#tareaAddTexto').val().trim();
+			console.log('tareaAdd [' + tareaAddTexto + ']');
+			var tareaDOM = getTareaDOM();
+			columnGrids[0].add(tareaDOM);
+			 $('#tareaAddTexto').val('');
+			 tareaTextoKeyUp();
+		}	
+		
+		// tareaRemove
+		function tareaRemove(itemRemoveId) {
+			var idElementToRemove = 'item_' + itemRemoveId.split('_')[1];
+			var itemsArray = columnGrids[0].getItems();
+			var arrayLength = itemsArray.length;
+			for (var i = 0; i < arrayLength; i++) {
+				var item = itemsArray[i];
+				if(item.getElement().id === idElementToRemove) {
+					columnGrids[0].hide(item);
+				}
+			}
+		}
+		
+		// tareaTextoKeyUp
+		function tareaTextoKeyUp() {
+			var tareaAddTexto = $('#tareaAddTexto').val().trim();
+			if(tareaAddTexto && tareaAddTexto.length > 0) {
+				$('#tareaAddBoton').prop("disabled",false);
+			}
+			else {
+				$('#tareaAddBoton').prop("disabled",true);
+			}
+		}
+		
+	</script>
+	<!-- Ejecutamos actualizar() al cargar la página -->
+	<script>
+	    $(document).ready(function() {
+	    	actualizar();
+	    });	
+	</script>
+</body>
+</html>
