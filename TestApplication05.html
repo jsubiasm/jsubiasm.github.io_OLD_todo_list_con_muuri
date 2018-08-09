@@ -42,7 +42,7 @@
 					if(result) {
 						console.log('insertada tarea [' + tareaId + '] [' + tareaTexto + '] con ObjectId [' + result.insertedId + ']')
 					}
-					actualizar();
+					actualizarListaTareas();
 				}
 			).catch(
 				err => console.error(err)
@@ -76,7 +76,7 @@
 	}
 	
 	// actualizar
-	function actualizar() {
+	function actualizarListaTareas() {
 		console.log('actualizar');
 		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
 			user => db.collection('TestCollection01').find({}).asArray()
@@ -103,29 +103,63 @@
 			user => db.collection('TestCollection01').find({}).asArray()
 		).then(
 			listaTareas => {
-				listaTareas.sort(function(itemA, itemB) {return parseInt(itemA.tareaId) - parseInt(itemB.tareaId)});
-				console.log(listaTareas);
-				var nuevoId = 0;
-				var tareasActualizadas = 0;
-				listaTareas.forEach(function (arrayItem) {
-					db.collection('TestCollection01').updateOne({'tareaId':arrayItem.tareaId}, {'$set': {'tareaId': nuevoId}}).then(
-						() => {
-							tareasActualizadas++;
-							if(tareasActualizadas === listaTareas.length) {
-								actualizar();									
+				if(listaTareas.length > 0) {
+					listaTareas.sort(function(itemA, itemB) {return parseInt(itemA.tareaId) - parseInt(itemB.tareaId)});
+					console.log(listaTareas);
+					var nuevoId = 0;
+					var tareasActualizadas = 0;
+					listaTareas.forEach(function (arrayItem) {
+						db.collection('TestCollection01').updateOne({'tareaId':arrayItem.tareaId}, {'$set': {'tareaId': nuevoId}}).then(
+							() => {
+								tareasActualizadas++;
+								if(tareasActualizadas === listaTareas.length) {
+									actualizarListaTareas();									
+								}
 							}
-						}
-					).catch(
-						err => console.error(err)
-					);
-					nuevoId++;
-				});			
+						).catch(
+							err => console.error(err)
+						);
+						nuevoId++;
+					});	
+				}
+				else {
+					actualizarListaTareas();
+				}
 			}
 		).catch(
 			err => console.error(err)
 		);
 	}
-	
+
+	// actualizarPosiciones
+	function actualizarPosiciones() {
+		console.log('actualizarPosiciones');
+		var allItemsArray = columnGrids[0].getItems();
+		var itemsArray = [];
+		allItemsArray.forEach(function (arrayItem) {
+			if( parseInt(arrayItem.getElement().id.split('_')[1]) >= 0 ) {
+				itemsArray.push(arrayItem);
+			}
+		});			
+		var arrayLength = itemsArray.length;
+		var nuevoId = 0;
+		var tareasActualizadas = 0;
+		for (var i = 0; i < arrayLength; i++) {
+			var item = itemsArray[i];
+			db.collection('TestCollection01').updateOne({'tareaId':parseInt(item.getElement().id.split('_')[1])}, {'$set': {'tareaId': nuevoId}}).then(
+				() => {
+					tareasActualizadas++;
+					if(tareasActualizadas === itemsArray.length) {
+						actualizarListaTareas();									
+					}
+				}
+			).catch(
+				err => console.error(err)
+			);
+			nuevoId++;		
+		}
+	}	
+
 </script>
 </head>
 <body>
@@ -173,6 +207,7 @@
 		var itemContainers = [].slice.call(document.querySelectorAll('.board-column-content'));
 		var columnGrids = [];
 		var boardGrid;
+		var debugEvents = false;
 		
 		// Define the column grids so we can drag those items around.
 		itemContainers.forEach(function(container)
@@ -194,14 +229,14 @@
 			}
 			).on('dragStart', function(item)
 			{
-				console.log('dragStart');
+				if(debugEvents) {console.log('dragStart')};
 				// Let's set fixed widht/height to the dragged item so that it does not stretch unwillingly when it's appended to the document body for the duration of the drag.
 				item.getElement().style.width = item.getWidth() + 'px';
 				item.getElement().style.height = item.getHeight() + 'px';
 			}
 			).on('dragReleaseEnd', function(item)
 			{
-				console.log('dragReleaseEnd');
+				if(debugEvents) {console.log('dragReleaseEnd')};
 				// Let's remove the fixed width/height from the dragged item now that it is back in a grid column and can freely adjust to it's surroundings.
 				item.getElement().style.width = '';
 				item.getElement().style.height = '';
@@ -210,43 +245,41 @@
 				{
 					grid.refreshItems();
 				});
+				tareasUpdate();
 			}
 			).on('layoutStart', function()
 			{
 				// Let's keep the board grid up to date with the dimensions changes of column grids.
-				console.log('layoutStart');
+				if(debugEvents) {console.log('layoutStart')};
 				boardGrid.refreshItems().layout();
 			}
 			).on('dragInit', function (item, event) 
 			{ 
-				console.log('dragInit.event.target.id [' + event.target.id + ']');
+				if(debugEvents) {console.log('dragInit.event.target.id [' + event.target.id + ']')};
 				if(event.target.id.includes('itemRemove_')) {
 					tareaRemove(event.target.id);
 				}
-			}			
-			).on('dragMove', function (item, event) 
-			{ 
-				console.log('dragMove.event.target.id [' + event.target.id + ']');
-			}	
-			).on('synchronize', function () { console.log('synchronize'); }
-			).on('layoutEnd', function (items) { console.log('layoutEnd'); }
-			).on('add', function (items) { console.log('add'); }
-			).on('remove', function (items, indices) { console.log('remove'); }
-			).on('showStart', function (items) { console.log('showStart'); }
-			).on('showEnd', function (items) { console.log('showEnd'); }
-			).on('hideStart', function (items) { console.log('hideStart'); }
-			).on('hideEnd', function (items) { console.log('hideEnd'); }
-			).on('filter', function (shownItems, hiddenItems) { console.log('filter'); }
-			).on('sort', function (currentOrder, previousOrder) { console.log('sort'); }
-			).on('move', function (data) { console.log('move'); }
-			).on('send', function (data) { console.log('send'); }
-			).on('beforeSend', function (data) { console.log('beforeSend'); }
-			).on('receive', function (data) { console.log('receive'); }
-			).on('beforeReceive', function (data) { console.log('beforeReceive'); }
-			).on('dragScroll', function (item, event) { console.log('dragScroll'); }
-			).on('dragEnd', function (item, event) { console.log('dragEnd'); }
-			).on('dragReleaseStart', function (item) { console.log('dragReleaseStart'); }
-			).on('destroy', function () { console.log('destroy'); }
+			}
+			).on('dragMove', function () { if(debugEvents) {console.log('dragMove');} }
+			).on('synchronize', function () { if(debugEvents) {console.log('synchronize');} }
+			).on('layoutEnd', function (items) { if(debugEvents) {console.log('layoutEnd');} }
+			).on('add', function (items) { if(debugEvents) {console.log('add');} }
+			).on('remove', function (items, indices) { if(debugEvents) {console.log('remove');} }
+			).on('showStart', function (items) { if(debugEvents) {console.log('showStart');} }
+			).on('showEnd', function (items) { if(debugEvents) {console.log('showEnd');} }
+			).on('hideStart', function (items) { if(debugEvents) {console.log('hideStart');} }
+			).on('hideEnd', function (items) { if(debugEvents) {console.log('hideEnd');} }
+			).on('filter', function (shownItems, hiddenItems) { if(debugEvents) {console.log('filter');} }
+			).on('sort', function (currentOrder, previousOrder) { if(debugEvents) {console.log('sort');} }
+			).on('move', function (data) { if(debugEvents) {console.log('move');} }
+			).on('send', function (data) { if(debugEvents) {console.log('send');} }
+			).on('beforeSend', function (data) { if(debugEvents) {console.log('beforeSend');} }
+			).on('receive', function (data) { if(debugEvents) {console.log('receive');} }
+			).on('beforeReceive', function (data) { if(debugEvents) {console.log('beforeReceive');} }
+			).on('dragScroll', function (item, event) { if(debugEvents) {console.log('dragScroll');} }
+			).on('dragEnd', function (item, event) { if(debugEvents) {console.log('dragEnd');} }
+			).on('dragReleaseStart', function (item) { if(debugEvents) {console.log('dragReleaseStart');} }
+			).on('destroy', function () { if(debugEvents) {console.log('destroy');} }			
 			);					
 			// Add the column grid reference to the column grids array, so we can access it later on.
 			columnGrids.push(grid);
@@ -293,6 +326,7 @@
 		// tareaRemove
 		function tareaRemove(itemRemoveId) {
 			if(interaccionPermitida) {
+				console.log('tareaRemove [' + itemRemoveId + ']');
 				var id = itemRemoveId.split('_')[1];
 				var idElementToRemove = 'item_' + id;
 				var itemsArray = columnGrids[0].getItems();
@@ -301,12 +335,21 @@
 					var item = itemsArray[i];
 					if(item.isVisible() && (item.getElement().id === idElementToRemove)) {
 						columnGrids[0].hide(item);
+						item.getElement().id = 'item_-1';
 						interaccionPermitida = false;
 						$('#tareaAddBoton').prop("disabled",true);					
 						borrar(id);
 					}
 				}
 			}
+		}
+		
+		// 
+		function tareasUpdate() {
+			console.log('tareasUpdate]');
+			interaccionPermitida = false;
+			$('#tareaAddBoton').prop("disabled",true);	
+			actualizarPosiciones();
 		}
 		
 		// vaciarListaTareas
@@ -317,6 +360,7 @@
 				var item = itemsArray[i];
 				if(item.isVisible()){
 					columnGrids[0].hide(item);
+					item.getElement().id = 'item_-1';
 				}
 			}
 		}		
@@ -329,10 +373,10 @@
 		}		
 		
 	</script>
-	<!-- Ejecutamos actualizar() al cargar la página -->
+	<!-- Ejecutamos actualizarListaTareas() al cargar la página -->
 	<script>
 	    $(document).ready(function() {
-	    	actualizar();
+	    	actualizarListaTareas();
 	    });	
 	</script>
 </body>
