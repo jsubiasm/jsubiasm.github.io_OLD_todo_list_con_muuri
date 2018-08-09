@@ -34,10 +34,7 @@
 	function insertar(tareaTexto, tareaId) {
 		console.log('insertando [' + tareaId + '] [' + tareaTexto + ']');
 		if(tareaTexto) {
-			client.auth.loginWithCredential(new stitch.AnonymousCredential()
-			).then(
-				user => db.collection('TestCollection01').insertOne({'tareaId':tareaId, 'tareaTexto':tareaTexto})
-			).then(
+			db.collection('TestCollection01').insertOne({'tareaId':tareaId, 'tareaTexto':tareaTexto}).then(
 				result => {
 					if(result) {
 						console.log('insertada tarea [' + tareaId + '] [' + tareaTexto + '] con ObjectId [' + result.insertedId + ']')
@@ -54,9 +51,7 @@
 	function borrar(tareaId) {
 		console.log('borrando [' + tareaId + ']');
 		if(tareaId) {
-			client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
-				user => db.collection('TestCollection01').find({'tareaId':parseInt(tareaId)}).asArray()
-			).then(
+			db.collection('TestCollection01').find({'tareaId':parseInt(tareaId)}).asArray().then(
 				listaTareas => {
 					if(listaTareas.length > 0) {
 						return db.collection('TestCollection01').deleteMany({'tareaId':parseInt(tareaId)})
@@ -78,9 +73,7 @@
 	// actualizar
 	function actualizarListaTareas() {
 		console.log('actualizar');
-		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
-			user => db.collection('TestCollection01').find({}).asArray()
-		).then(
+		db.collection('TestCollection01').find({}).asArray().then(
 			listaTareas => {
 				listaTareas.sort(function(itemA, itemB) {return parseInt(itemA.tareaId) - parseInt(itemB.tareaId)});
 				console.log(listaTareas);
@@ -99,9 +92,7 @@
 	// regenerarIdentificadores
 	function regenerarIdentificadores() {
 		console.log('regenerarIdentificadores');
-		client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(
-			user => db.collection('TestCollection01').find({}).asArray()
-		).then(
+		db.collection('TestCollection01').find({}).asArray().then(
 			listaTareas => {
 				if(listaTareas.length > 0) {
 					listaTareas.sort(function(itemA, itemB) {return parseInt(itemA.tareaId) - parseInt(itemB.tareaId)});
@@ -141,11 +132,9 @@
 				itemsArray.push(arrayItem);
 			}
 		});			
-		var arrayLength = itemsArray.length;
 		var nuevoId = 0;
 		var tareasActualizadas = 0;
-		for (var i = 0; i < arrayLength; i++) {
-			var item = itemsArray[i];
+		itemsArray.forEach(function (item) {
 			db.collection('TestCollection01').updateOne({'tareaId':parseInt(item.getElement().id.split('_')[1])}, {'$set': {'tareaId': nuevoId}}).then(
 				() => {
 					tareasActualizadas++;
@@ -156,8 +145,8 @@
 			).catch(
 				err => console.error(err)
 			);
-			nuevoId++;		
-		}
+			nuevoId++;	
+		});
 	}	
 
 </script>
@@ -329,10 +318,7 @@
 				console.log('tareaRemove [' + itemRemoveId + ']');
 				var id = itemRemoveId.split('_')[1];
 				var idElementToRemove = 'item_' + id;
-				var itemsArray = columnGrids[0].getItems();
-				var arrayLength = itemsArray.length;
-				for (var i = 0; i < arrayLength; i++) {
-					var item = itemsArray[i];
+				columnGrids[0].getItems().forEach(function (item) {
 					if(item.isVisible() && (item.getElement().id === idElementToRemove)) {
 						columnGrids[0].hide(item);
 						item.getElement().id = 'item_-1';
@@ -340,7 +326,7 @@
 						$('#tareaAddBoton').prop("disabled",true);					
 						borrar(id);
 					}
-				}
+				});
 			}
 		}
 		
@@ -354,15 +340,12 @@
 		
 		// vaciarListaTareas
 		function vaciarListaTareas() {
-			var itemsArray = columnGrids[0].getItems();
-			var arrayLength = itemsArray.length;
-			for (var i = 0; i < arrayLength; i++) {
-				var item = itemsArray[i];
+			columnGrids[0].getItems().forEach(function (item) {
 				if(item.isVisible()){
 					columnGrids[0].hide(item);
 					item.getElement().id = 'item_-1';
 				}
-			}
+			});				
 		}		
 		
 		// tareaAddTexto
