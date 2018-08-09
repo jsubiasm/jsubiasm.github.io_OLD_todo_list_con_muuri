@@ -42,8 +42,7 @@
 					if(result) {
 						console.log('insertada tarea [' + tareaId + '] [' + tareaTexto + '] con ObjectId [' + result.insertedId + ']')
 					}
-					$('#tareaAddBoton').prop("disabled",false);
-					interaccionPermitida = true;
+					actualizar();
 				}
 			).catch(
 				err => console.error(err)
@@ -83,11 +82,14 @@
 			user => db.collection('TestCollection01').find({}).asArray()
 		).then(
 			listaTareas => {
+				listaTareas.sort(function(itemA, itemB) {return parseInt(itemA.tareaId) - parseInt(itemB.tareaId)});
 				console.log(listaTareas);
 				vaciarListaTareas();
 				listaTareas.forEach(function (arrayItem) {
 			    	tareaActualizarTexto(arrayItem.tareaTexto, arrayItem.tareaId);
-				});			
+				});	
+				$('#tareaAddBoton').prop("disabled",false);
+				interaccionPermitida = true;				
 			}
 		).catch(
 			err => console.error(err)
@@ -101,6 +103,7 @@
 			user => db.collection('TestCollection01').find({}).asArray()
 		).then(
 			listaTareas => {
+				listaTareas.sort(function(itemA, itemB) {return parseInt(itemA.tareaId) - parseInt(itemB.tareaId)});
 				console.log(listaTareas);
 				var nuevoId = 0;
 				var tareasActualizadas = 0;
@@ -109,9 +112,7 @@
 						() => {
 							tareasActualizadas++;
 							if(tareasActualizadas === listaTareas.length) {
-								actualizar();
-								$('#tareaAddBoton').prop("disabled",false);
-								interaccionPermitida = true;									
+								actualizar();									
 							}
 						}
 					).catch(
@@ -149,10 +150,10 @@
 				<form class="form-horizontal">
 					<div class="form-group">
 						<div class="col-sm-10">
-							<input type="text" class="form-control" id="tareaAddTexto" onkeyup="tareaTextoKeyUp()">
+							<input type="text" class="form-control" id="tareaAddTexto">
 						</div>
 						<div class="col-sm-2">
-							<button type="button" class="btn btn-warning btn-lg" id="tareaAddBoton" onclick="tareaAdd()">
+							<button type="button" class="btn btn-warning btn-lg" id="tareaAddBoton" onclick="tareaAdd()" disabled="disabled">
 								<span class="glyphicon glyphicon-plus"></span> Add
 							</button>
 						</div>
@@ -279,10 +280,12 @@
 				interaccionPermitida = false;
 				$('#tareaAddBoton').prop("disabled",true);
 				console.log('tareaAdd [' + tareaAddTexto + ']');
-				var itemCount = columnGrids[0].getItems().length;
-				var tareaDOM = getTareaDOM(tareaAddTexto, itemCount);
+				var items = columnGrids[0].getItems();
+				items.sort(function(itemA, itemB) {return parseInt(itemB.getElement().id.split('_')[1]) - parseInt(itemA.getElement().id.split('_')[1])});
+				var tareaAddId = items[0] ? (parseInt(items[0].getElement().id.split('_')[1]) + 1) : 0;
+				var tareaDOM = getTareaDOM(tareaAddTexto, tareaAddId);
 				columnGrids[0].add(tareaDOM);
-				insertar(tareaAddTexto, itemCount);
+				insertar(tareaAddTexto, tareaAddId);
 				$('#tareaAddTexto').val('');				
 			}
 		}
@@ -296,7 +299,7 @@
 				var arrayLength = itemsArray.length;
 				for (var i = 0; i < arrayLength; i++) {
 					var item = itemsArray[i];
-					if(item.getElement().id === idElementToRemove) {
+					if(item.isVisible() && (item.getElement().id === idElementToRemove)) {
 						columnGrids[0].hide(item);
 						interaccionPermitida = false;
 						$('#tareaAddBoton').prop("disabled",true);					
@@ -306,24 +309,15 @@
 			}
 		}
 		
-		// tareaTextoKeyUp
-		function tareaTextoKeyUp() {
-			/*var tareaAddTexto = $('#tareaAddTexto').val().trim();
-			if(tareaAddTexto && tareaAddTexto.length > 0) {
-				$('#tareaAddBoton').prop("disabled",false);
-			}
-			else {
-				$('#tareaAddBoton').prop("disabled",true);
-			}*/
-		}
-		
 		// vaciarListaTareas
 		function vaciarListaTareas() {
 			var itemsArray = columnGrids[0].getItems();
 			var arrayLength = itemsArray.length;
 			for (var i = 0; i < arrayLength; i++) {
 				var item = itemsArray[i];
-				columnGrids[0].hide(item);
+				if(item.isVisible()){
+					columnGrids[0].hide(item);
+				}
 			}
 		}		
 		
