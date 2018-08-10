@@ -41,7 +41,7 @@
 	}
 }*/
 .board-column.todo .board-column-header {
-	background: #4A9FF9;
+	background: #8989bb;
 }
 
 .board-column-footer {
@@ -49,7 +49,7 @@
 	overflow: hidden;
 	padding: 0 20px;
 	text-align: left;
-	background: #4A9FF9;
+	background: #8989bb;
 	border-radius: 3px 3px 0 0;
 	border: 10px solid transparent;
 }

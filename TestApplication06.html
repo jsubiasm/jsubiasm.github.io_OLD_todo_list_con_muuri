@@ -49,19 +49,19 @@
 		<!-- Include all compiled plugins (below), or include individual files as needed -->
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 		<script>
-		
+
 			// habilita el console.log
 			const loggerActivo = true;
-		
+
 			// cliente app stitch
 			const client = stitch.Stitch.initializeDefaultAppClient('testapplication01-begti');
-			
+
 			// cliente db atlas
 			const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('TestDatabase01');
-			
+
 		  	// control interacciones del usuario
 			var interaccionPermitida = false;	
-		  	
+
 			// variables MUURI
 			var itemContainers = [].slice.call(document.querySelectorAll('.board-column-content'));
 			var columnGrids = [];
@@ -74,7 +74,7 @@
 					console.log(obj);
 				}
 			}
-			
+
 			// getTareaDOM
 			function getTareaDOM(tareaId, tareaTexto) {
 				var tareaDOMString = '<div class=\"board-item\" id=\"item_' + tareaId + '\"><div class=\"board-item-content\"><span>' + tareaTexto + ' [item' + tareaId + ']</span> <span class=\"glyphicon glyphicon-trash icon-color icon-trash\" id=\"itemRemove_' + tareaId + '\"></span></div></div>';
@@ -82,14 +82,14 @@
 				div.innerHTML = tareaDOMString.trim();
 				return div.firstChild; 
 			}
-		  	
+
 			// agregarTareaEnLista
 			function agregarTareaEnLista(tareaId, tareaTexto) {
 				logger('agregarTareaEnLista [' + tareaId + '] [' + tareaTexto + ']');
 				var tareaDOM = getTareaDOM(tareaId, tareaTexto.trim());
 				columnGrids[0].add(tareaDOM);
 			}
-		  	
+
 			// vaciarListaTareas
 			function vaciarListaTareas() {
 				columnGrids[0].getItems().forEach(function (tareaItem) {
@@ -99,7 +99,7 @@
 					}
 				});				
 			}
-		  	
+
 			// actualizar
 			function actualizarListaTareas() {
 				logger('actualizarListaTareas');
@@ -119,7 +119,7 @@
 					err => console.error(err)
 				);
 			}	  	
-		  	
+
 			// tareaAdd
 			function tareaAdd() {
 				var tareaTexto = $('#tareaAddTexto').val().trim();
@@ -171,7 +171,8 @@
 									result => {
 										if(result) {
 											logger('borradas [' + result.deletedCount + '] tareas con id [' + tareaId + ']')
-										}					
+										}	
+										actualizarListaTareas();
 									}
 								).catch(
 									err => console.error(err)
@@ -181,7 +182,7 @@
 					}
 				}
 			}	
-			
+
 			// reordenarTareas
 			function reordenarTareas() {
 				logger('reordenarTareas');
@@ -193,11 +194,11 @@
 					if(tareaItem.isVisible()) {
 						arrayTareasVisibles.push(tareaItem);
 					}
-				});			
-				var nuevoId = 0;
-				var tareasActualizadas = 0;
-				arrayTareasVisibles.forEach(function (tareaVisibleItem) {
-					if(listaTareas.length > 0) {
+				});
+				if(arrayTareasVisibles.length > 0) {
+					var nuevoId = 0;
+					var tareasActualizadas = 0;
+					arrayTareasVisibles.forEach(function (tareaVisibleItem) {
 						db.collection('TestCollection01').updateOne({'tareaId':parseInt(tareaVisibleItem.getElement().id.split('_')[1])}, {'$set': {'tareaId': nuevoId}}).then(
 							() => {
 								tareasActualizadas++;
@@ -209,15 +210,13 @@
 							err => console.error(err)
 						);
 						nuevoId++;	
-					}
-					else {
-						actualizarListaTareas();
-					}
-				});
+					});					
+				}
+				else {
+					actualizarListaTareas();
+				}
 			}		
 
-			
-			
 			// Define the column grids so we can drag those items around.
 			itemContainers.forEach(function(container)
 			{
@@ -293,7 +292,7 @@
 				// Add the column grid reference to the column grids array, so we can access it later on.
 				columnGrids.push(grid);
 			});
-			
+
 			// Instantiate the board grid so we can drag those columns around.
 			boardGrid = new Muuri('.board', {
 				layoutDuration : 400,
@@ -306,7 +305,7 @@
 				dragReleaseDuration : 400,
 				dragReleaseEasing : 'ease'
 			});				
-			
+
 			// Operaciones realizadas al cargar la página
 		    $(document).ready(function() {
 		    	
